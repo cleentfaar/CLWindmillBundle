@@ -1,5 +1,5 @@
 {
-  "name": "cleentfaar/slack-bundle",
+  "name": "cleentfaar/windmill-bundle",
   "description": "This Symfony bundle provides integration with the Windmill Chess library, allowing you to play chess through a web interface or commands",
   "keywords": ["windmill", "chess", "symfony", "bundle"],
   "type": "symfony-bundle",
