@@ -13,7 +13,7 @@
   ],
   "require": {
     "symfony/framework-bundle": "~2.4",
-    "cleentfaar/slack": "dev-master"
+    "cleentfaar/windmill": "dev-master"
   },
   "require-dev": {
     "phpunit/phpunit": "~4.1"
