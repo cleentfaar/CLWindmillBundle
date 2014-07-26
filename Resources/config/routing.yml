@@ -1,0 +1,3 @@
+cl_windmill_game:
+    pattern:  /game
+    defaults: { _controller: CLWindmillBundle:Game:index }

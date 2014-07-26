@@ -1,0 +1,70 @@
+parameters:
+  cl_windmill.twig.decorator_extension.class: CL\Bundle\WindmillBundle\Twig\DecoratorExtension
+  cl_windmill.calculation.move_calculator.class: CL\Windmill\Util\MoveCalculator
+  cl_windmill.decoration.game_decorator_factory.class: CL\Windmill\Decoration\Factory\GameDecoratorFactory
+  cl_windmill.decoration.player_decorator_factory.class: CL\Windmill\Decoration\Factory\PlayerDecoratorFactory
+  cl_windmill.decoration.board_decorator_factory.class: CL\Windmill\Decoration\Factory\BoardDecoratorFactory
+  cl_windmill.decoration.piece_decorator_factory.class: CL\Windmill\Decoration\Factory\PieceDecoratorFactory
+  cl_windmill.model.notation_parser.move.class: CL\Windmill\Util\MoveParser
+  cl_windmill.model.game_factory.class: CL\Windmill\Model\Game\GameFactory
+  cl_windmill.model.player_factory.class: CL\Windmill\Model\Player\PlayerFactory
+  cl_windmill.model.board_factory.class: CL\Windmill\Model\Board\BoardFactory
+  cl_windmill.model.square_factory.class: CL\Windmill\Model\Square\SquareFactory
+  cl_windmill.model.piece_factory.class: CL\Windmill\Model\Piece\PieceFactory
+  cl_windmill.model.game.class: CL\Windmill\Model\Game\GameInterface
+  cl_windmill.model.board.class: CL\Windmill\Model\Board\BoardInterface
+  cl_windmill.model.player.class: CL\Windmill\Model\Player\PlayerInterface
+  cl_windmill.model.piece.class: CL\Windmill\Model\Piece\PieceInterface
+  cl_windmill.storage.adapter_loader.class: CL\Windmill\Storage\AdapterLoader
+  cl_windmill.storage.adapter.doctrine.class: CL\Windmill\Storage\Adapter\DoctrineAdapter
+  cl_windmill.storage.adapter.file.class: CL\Windmill\Storage\Adapter\FileAdapter
+
+services:
+  cl_windmill.decoration.game_decorator_factory:
+    class: %cl_windmill.decoration.game_decorator_factory.class%
+    arguments: [@cl_decoration.delegating_decorator_factory]
+    tags:
+      - { name: cl_decoration.decorator_factory, class: %cl_windmill.model.game.class% }
+  cl_windmill.decoration.player_decorator_factory:
+    class: %cl_windmill.decoration.player_decorator_factory.class%
+    tags:
+      - { name: cl_decoration.decorator_factory, class: %cl_windmill.model.player.class% }
+  cl_windmill.decoration.piece_decorator_factory:
+    class: %cl_windmill.decoration.piece_decorator_factory.class%
+    tags:
+      - { name: cl_decoration.decorator_factory, class: %cl_windmill.model.piece.class% }
+  cl_windmill.decoration.board_decorator_factory:
+    class: %cl_windmill.decoration.board_decorator_factory.class%
+    arguments: [@cl_decoration.delegating_decorator_factory]
+    tags:
+      - { name: cl_decoration.decorator_factory, class: %cl_windmill.model.board.class% }
+  cl_windmill.calculation.move_calculator:
+    class: %cl_windmill.calculation.move_calculator.class%
+  cl_windmill.model.notation_parser.move:
+    class: %cl_windmill.model.notation_parser.move.class%
+    arguments: [@cl_windmill.calculation.move_calculator]
+  cl_windmill.model.piece_factory:
+    class: %cl_windmill.model.piece_factory.class%
+  cl_windmill.model.square_factory:
+    class: %cl_windmill.model.square_factory.class%
+    arguments: [@cl_windmill.model.piece_factory]
+  cl_windmill.model.player_factory:
+    class: %cl_windmill.model.player_factory.class%
+  cl_windmill.model.board_factory:
+    class: %cl_windmill.model.board_factory.class%
+    arguments: [@cl_windmill.model.square_factory]
+  cl_windmill.model.game_factory:
+    class: %cl_windmill.model.game_factory.class%
+    arguments: [@cl_windmill.model.board_factory, @cl_windmill.model.player_factory, @cl_windmill.storage.game_storage_loader]
+  cl_windmill.storage.adapter_loader:
+    class: %cl_windmill.storage.adapter_loader.class%
+  cl_windmill.storage.adapter.doctrine:
+    class: %cl_windmill.storage.adapter.doctrine.class%
+    arguments: [@cl_windmill.model.game_factory, @doctrine, CL\Bundle\WindmillBundle\Entity\Game]
+    tags:
+      - { name: cl_windmill.storage.game_storage, alias: orm }
+  cl_windmill.twig.decorator_extension:
+    class: %cl_windmill.twig.decorator_extension.class%
+    arguments: [@cl_decoration.delegating_decorator_factory]
+    tags:
+      - { name: twig.extension }

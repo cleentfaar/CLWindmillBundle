@@ -1,0 +1,14 @@
+{% extends "CLWindmillBundle::base.html.twig" %}
+{% block content %}
+  {% set board = decorate(game.board) %}
+  STOPWATCH:<br/>
+  {% for name,event in stopwatch_events %}
+    {{ name }}: {{ event.duration }}<br/>
+  {% endfor %}
+  <br/>
+  <br/>
+  BOARD:<br/>
+  <blockquote>
+  {{ board.toAscii }}
+  </blockquote>
+{% endblock %}
