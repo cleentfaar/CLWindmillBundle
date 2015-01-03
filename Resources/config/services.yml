@@ -1,4 +1,5 @@
 parameters:
+  cl_windmill.decorator.piece.class: CL\Windmill\Decorator\PieceDecorator
   cl_windmill.util.move_calculator.class: CL\Windmill\Util\LazyMoveCalculator
   cl_windmill.util.move_parser.class: CL\Windmill\Util\MoveParser
   cl_windmill.util.move_registry.class: CL\Windmill\Util\MoveRegistry
@@ -20,9 +21,13 @@ parameters:
   cl_windmill.twig_extension.windmill.class: CL\Bundle\WindmillBundle\Twig\WindmillExtension
 
 services:
+  cl_windmill.decorator.piece:
+    class: %cl_windmill.decorator.piece.class%
   cl_windmill.util.move_parser:
     class: %cl_windmill.util.move_parser.class%
-    arguments: [@cl_windmill.util.move_calculator]
+    arguments:
+      - @cl_windmill.util.move_calculator
+      - @cl_windmill.decorator.piece
   cl_windmill.util.piece_factory:
     class: %cl_windmill.util.piece_factory.class%
   cl_windmill.util.square_factory:
