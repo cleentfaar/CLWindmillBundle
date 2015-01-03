@@ -12,8 +12,9 @@
     }
   ],
   "require": {
+    "php": ">=5.5",
     "symfony/framework-bundle": "~2.6",
-    "cleentfaar/windmill": "*",
+    "cleentfaar/windmill": "dev-master",
     "jms/serializer-bundle": "~0.12"
   },
   "require-dev": {
