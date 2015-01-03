@@ -1,5 +1,9 @@
 {% extends "CLWindmillBundle::base.html.twig" %}
 
 {% block content %}
-  {{ windmill_render_game(game) }}
+  {{ windmill_render_game(game, 'hidden') }}
+{% endblock %}
+
+{% block javascripts %}
+  {{ windmill_render_javascripts(game) }}
 {% endblock %}

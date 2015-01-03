@@ -2,6 +2,7 @@ parameters:
   cl_windmill.calculation.move_calculator.class: CL\Windmill\Util\MoveCalculator
   cl_windmill.util.move_parser.class: CL\Windmill\Util\MoveParser
   cl_windmill.util.game_factory.class: CL\Windmill\Util\GameFactory
+  cl_windmill.util.game_serializer.class: CL\Windmill\Util\GameSerializer
   cl_windmill.util.player_factory.class: CL\Windmill\Util\PlayerFactory
   cl_windmill.util.board_factory.class: CL\Windmill\Util\BoardFactory
   cl_windmill.util.square_factory.class: CL\Windmill\Util\SquareFactory
@@ -12,7 +13,7 @@ parameters:
   cl_windmill.model.piece.class: CL\Windmill\Model\Piece\PieceInterface
   cl_windmill.util.storage_adapter_registry.class: CL\Windmill\Util\StorageAdapterRegistry
   cl_windmill.util.storage_helper.class: CL\Windmill\Util\StorageHelper
-  cl_windmill.storage_adapter.orm.class: CL\Windmill\Storage\Adapter\Orm\OrmAdapter
+  cl_windmill.storage_adapter.orm.class: CL\Windmill\Storage\Adapter\OrmAdapter
   cl_windmill.storage_adapter.file.class: CL\Windmill\Storage\Adapter\FileAdapter
   cl_windmill.template_registry.class: CL\Windmill\Util\TemplateRegistry
   cl_windmill.twig_extension.windmill.class: CL\Bundle\WindmillBundle\Twig\WindmillExtension
@@ -36,16 +37,25 @@ services:
   cl_windmill.util.game_factory:
     class: %cl_windmill.util.game_factory.class%
     arguments: [@cl_windmill.util.board_factory]
+  cl_windmill.util.game_serializer:
+    class: %cl_windmill.util.game_serializer.class%
+    arguments:
+      - @jms_serializer
+      - @cl_windmill.util.game_factory
   cl_windmill.util.storage_adapter_registry:
     class: %cl_windmill.util.storage_adapter_registry.class%
   cl_windmill.util.storage_helper:
     class: %cl_windmill.util.storage_helper.class%
     arguments:
       - @cl_windmill.util.storage_adapter_registry
-      - %cl_windmill.default_storage%
+      - %cl_windmill.storage.type%
   cl_windmill.storage_adapter.orm:
     class: %cl_windmill.storage_adapter.orm.class%
-    arguments: [@cl_windmill.util.game_factory, @doctrine, CL\Bundle\WindmillBundle\Entity\Game]
+    arguments:
+      - @doctrine
+      - @cl_windmill.util.game_serializer
+      - %cl_windmill.storage.game_class%
+      - %cl_windmill.storage.game_state_class%
     tags:
       - { name: cl_windmill.storage_adapter, alias: orm }
   cl_windmill.template_registry:
@@ -58,5 +68,6 @@ services:
       - @twig
       - @router
       - @cl_windmill.template_registry
+      - %cl_windmill.move_route%
     tags:
       - { name: twig.extension }

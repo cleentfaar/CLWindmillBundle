@@ -34,7 +34,16 @@ class CLWindmillExtension extends Extension
      */
     protected function setParameters(ContainerBuilder $container, array $config)
     {
-        $container->setParameter('cl_windmill.default_storage', $config['default_storage']);
-        $container->setParameter('cl_windmill.templates', $config['templates']);
+        $intactArrays = ['templates'];
+
+        foreach ($config as $key => $value) {
+            if (is_array($value) && !in_array($key, $intactArrays)) {
+                foreach ($value as $k => $v) {
+                    $container->setParameter(sprintf('cl_windmill.%s.%s', $key, $k), $v);
+                }
+            } else {
+                $container->setParameter(sprintf('cl_windmill.%s', $key), $value);
+            }
+        }
     }
 }

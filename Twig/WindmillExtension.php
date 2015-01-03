@@ -29,15 +29,31 @@ class WindmillExtension extends \Twig_Extension
     private $templateRegistry;
 
     /**
+     * @var bool
+     */
+    private $hasRenderedJavascripts = false;
+
+    /**
+     * @var string
+     */
+    private $moveRoute;
+
+    /**
      * @param \Twig_Environment $twig
      * @param RouterInterface   $router
      * @param TemplateRegistry  $templateRegistry
+     * @param string            $moveRoute
      */
-    public function __construct(\Twig_Environment $twig, RouterInterface $router, TemplateRegistry $templateRegistry)
-    {
+    public function __construct(
+        \Twig_Environment $twig,
+        RouterInterface $router,
+        TemplateRegistry $templateRegistry,
+        $moveRoute
+    ) {
         $this->twig             = $twig;
         $this->router           = $router;
         $this->templateRegistry = $templateRegistry;
+        $this->moveRoute        = $moveRoute;
     }
 
     /**
@@ -46,12 +62,14 @@ class WindmillExtension extends \Twig_Extension
     public function getFunctions()
     {
         return [
-            'windmill_render_board'    => new \Twig_Function_Method($this, 'renderBoard', ['is_safe' => ['html']]),
-            'windmill_render_captures' => new \Twig_Function_Method($this, 'renderCaptures', ['is_safe' => ['html']]),
-            'windmill_render_clocks'   => new \Twig_Function_Method($this, 'renderClocks', ['is_safe' => ['html']]),
-            'windmill_render_game'     => new \Twig_Function_Method($this, 'renderGame', ['is_safe' => ['html']]),
-            'windmill_render_history'  => new \Twig_Function_Method($this, 'renderHistory', ['is_safe' => ['html']]),
-            'windmill_render_vs'       => new \Twig_Function_Method($this, 'renderVs', ['is_safe' => ['html']]),
+            'windmill_render_board'       => new \Twig_Function_Method($this, 'renderBoard', ['is_safe' => ['html']]),
+            'windmill_render_captures'    => new \Twig_Function_Method($this, 'renderCaptures', ['is_safe' => ['html']]),
+            'windmill_render_clocks'      => new \Twig_Function_Method($this, 'renderClocks', ['is_safe' => ['html']]),
+            'windmill_render_game'        => new \Twig_Function_Method($this, 'renderGame', ['is_safe' => ['html']]),
+            'windmill_render_history'     => new \Twig_Function_Method($this, 'renderHistory', ['is_safe' => ['html']]),
+            'windmill_render_vs'          => new \Twig_Function_Method($this, 'renderVs', ['is_safe' => ['html']]),
+            'windmill_render_hidden_form' => new \Twig_Function_Method($this, 'renderHiddenForm', ['is_safe' => ['html']]),
+            'windmill_render_javascripts' => new \Twig_Function_Method($this, 'renderJavascripts', ['is_safe' => ['html']]),
         ];
     }
 
@@ -69,6 +87,43 @@ class WindmillExtension extends \Twig_Extension
         ];
 
         $template = $this->templateRegistry->get('captures');
+        $output   = $this->twig->render($template, $vars);
+
+        return $output;
+    }
+
+    /**
+     * @param GameInterface $game
+     *
+     * @return string
+     */
+    public function renderHiddenForm(GameInterface $game)
+    {
+        $vars = [
+            'action' => $this->router->generate($this->moveRoute, ['id' => $game->getId()]),
+        ];
+
+        $template = $this->templateRegistry->get('hidden_form');
+        $output   = $this->twig->render($template, $vars);
+
+        return $output;
+    }
+
+    /**
+     * @param GameInterface $game
+     *
+     * @return string
+     */
+    public function renderJavascripts(GameInterface $game)
+    {
+        $vars = [
+            'has_rendered'   => $this->hasRenderedJavascripts,
+            'plugin_options' => [
+                'url' => $this->router->generate($this->moveRoute, ['id' => $game->getId()]),
+            ],
+        ];
+
+        $template = $this->templateRegistry->get('javascripts');
         $output   = $this->twig->render($template, $vars);
 
         return $output;
@@ -125,13 +180,8 @@ class WindmillExtension extends \Twig_Extension
      */
     public function renderGame(GameInterface $game)
     {
-        $moveUrl = $this->router->generate('cl_windmill_game_move', ['id' => $game->getId()]);
-        $vars    = [
-            'game'             => $game,
-            'move_url'         => $moveUrl,
-            'windmill_options' => [
-                'url' => $moveUrl,
-            ],
+        $vars = [
+            'game' => $game,
         ];
 
         $template = $this->templateRegistry->get('game');
@@ -194,7 +244,9 @@ class WindmillExtension extends \Twig_Extension
                     $data['piece_color'] = $piece->getColor();
                     $data['content']     = $pieceDecorator->toAscii($piece);
                     if ($game->getCurrentColor() === $piece->getColor()) {
-                        $data['possible_targets'] = $moveCalculator->possibleMoves($square->getPosition(), $game->getBoard(), true);
+                        foreach ($moveCalculator->possibleMovesFrom($square->getPosition(), $game->getBoard(), true) as $move) {
+                            $data['possible_targets'][] = $move->getTo();
+                        }
                     }
                 }
 

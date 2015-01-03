@@ -84,12 +84,14 @@
                 this.windmill.handleResponse(data);
               }
             });
+            alert('ajax sent!');
           } else {
             // just submit (hidden) form
             self.formFrom.attr('value', from.data('position'));
             self.formTo.attr('value', to.data('position'));
 
             self.formFrom.closest('form').submit();
+            alert('form sent to '+self.formFrom.closest('form').attr('action'));
           }
         }
       });

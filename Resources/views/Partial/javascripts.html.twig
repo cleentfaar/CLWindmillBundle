@@ -1,0 +1,10 @@
+{% if has_rendered == false %}
+  <script type="text/javascript" src="{{ asset('bundles/clwindmill/js/jquery.min.js') }}"></script>
+  <script type="text/javascript" src="{{ asset('bundles/clwindmill/js/jquery.windmill.js') }}"></script>
+{% endif %}
+
+<script type="text/javascript">
+  $(function () {
+    $('.game').windmill({{ plugin_options|json_encode|raw }});
+  });
+</script>

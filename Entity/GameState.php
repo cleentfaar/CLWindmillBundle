@@ -2,8 +2,8 @@
 
 namespace CL\Bundle\WindmillBundle\Entity;
 
-use CL\Windmill\Storage\Adapter\Orm\PersistableGameInterface;
-use CL\Windmill\Storage\Adapter\Orm\PersistableGameStateInterface;
+use CL\Windmill\Model\Game\PersistableGameInterface;
+use CL\Windmill\Model\Game\PersistableGameStateInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
