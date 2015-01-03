@@ -4,6 +4,7 @@ namespace CL\Bundle\WindmillBundle\DependencyInjection;
 
 use CL\Bundle\WindmillBundle\Entity\Game;
 use CL\Bundle\WindmillBundle\Entity\GameState;
+use CL\Windmill\Util\MoveRegistry;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -20,6 +21,13 @@ class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->scalarNode('move_route')->defaultValue('cl_windmill_game_move')->end()
+                ->arrayNode('move_registry')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('storage_method')->defaultValue(MoveRegistry::STORAGE_JSON)->end()
+                        ->scalarNode('storage_target')->defaultValue('%kernel.cache_dir%/moves.json')->end()
+                    ->end()
+                ->end()
                 ->arrayNode('storage')
                     ->addDefaultsIfNotSet()
                     ->children()

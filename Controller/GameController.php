@@ -2,11 +2,10 @@
 
 namespace CL\Bundle\WindmillBundle\Controller;
 
-use CL\Windmill\Decoration\PieceDecorator;
+use CL\Windmill\Decorator\PieceDecorator;
 use CL\Windmill\Model\Color;
 use CL\Windmill\Model\Game\Game;
 use CL\Windmill\Model\Move\Move;
-use CL\Windmill\Util\MoveCalculator;
 use CL\Windmill\Util\StorageHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -89,7 +88,7 @@ class GameController extends Controller
      */
     private function createJsonResponseFromGame(Game $game, $ok = false)
     {
-        $moveCalculator = new MoveCalculator();
+        $moveCalculator = $this->get('cl_windmill.util.move_calculator');
         $pieceDecorator = new PieceDecorator();
         $squares        = [];
         foreach ($game->getBoard()->getSquares() as $square) {
@@ -106,7 +105,7 @@ class GameController extends Controller
                 $squareData['piece_color'] = $piece->getColor();
                 $squareData['content']     = $pieceDecorator->toAscii($piece);
                 if ($game->getCurrentColor() === $piece->getColor()) {
-                    $squareData['possible_targets'] = $moveCalculator->possibleMoves(
+                    $squareData['possible_targets'] = $moveCalculator->possibleMovesFrom(
                         $square->getPosition(),
                         $game->getBoard(),
                         true

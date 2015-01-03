@@ -1,6 +1,7 @@
 parameters:
-  cl_windmill.calculation.move_calculator.class: CL\Windmill\Util\MoveCalculator
+  cl_windmill.util.move_calculator.class: CL\Windmill\Util\LazyMoveCalculator
   cl_windmill.util.move_parser.class: CL\Windmill\Util\MoveParser
+  cl_windmill.util.move_registry.class: CL\Windmill\Util\MoveRegistry
   cl_windmill.util.game_factory.class: CL\Windmill\Util\GameFactory
   cl_windmill.util.game_serializer.class: CL\Windmill\Util\GameSerializer
   cl_windmill.util.player_factory.class: CL\Windmill\Util\PlayerFactory
@@ -19,11 +20,9 @@ parameters:
   cl_windmill.twig_extension.windmill.class: CL\Bundle\WindmillBundle\Twig\WindmillExtension
 
 services:
-  cl_windmill.calculation.move_calculator:
-    class: %cl_windmill.calculation.move_calculator.class%
   cl_windmill.util.move_parser:
     class: %cl_windmill.util.move_parser.class%
-    arguments: [@cl_windmill.calculation.move_calculator]
+    arguments: [@cl_windmill.util.move_calculator]
   cl_windmill.util.piece_factory:
     class: %cl_windmill.util.piece_factory.class%
   cl_windmill.util.square_factory:
@@ -37,6 +36,15 @@ services:
   cl_windmill.util.game_factory:
     class: %cl_windmill.util.game_factory.class%
     arguments: [@cl_windmill.util.board_factory]
+  cl_windmill.util.move_calculator:
+    class: %cl_windmill.util.move_calculator.class%
+    arguments:
+      - @cl_windmill.util.move_registry
+  cl_windmill.util.move_registry:
+    class: %cl_windmill.util.move_registry.class%
+    arguments:
+      - %cl_windmill.move_registry.storage_method%
+      - %cl_windmill.move_registry.storage_target%
   cl_windmill.util.game_serializer:
     class: %cl_windmill.util.game_serializer.class%
     arguments:
@@ -68,6 +76,7 @@ services:
       - @twig
       - @router
       - @cl_windmill.template_registry
+      - @cl_windmill.util.move_calculator
       - %cl_windmill.move_route%
     tags:
       - { name: twig.extension }

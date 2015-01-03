@@ -2,8 +2,8 @@
 
 namespace CL\Bundle\WindmillBundle\Twig;
 
-use CL\Windmill\Decoration\MoveDecorator;
-use CL\Windmill\Decoration\PieceDecorator;
+use CL\Windmill\Decorator\MoveDecorator;
+use CL\Windmill\Decorator\PieceDecorator;
 use CL\Windmill\Model\Color;
 use CL\Windmill\Model\Game\GameInterface;
 use CL\Windmill\Model\Square\Square;
@@ -29,6 +29,11 @@ class WindmillExtension extends \Twig_Extension
     private $templateRegistry;
 
     /**
+     * @var MoveCalculator
+     */
+    private $moveCalculator;
+
+    /**
      * @var bool
      */
     private $hasRenderedJavascripts = false;
@@ -42,17 +47,20 @@ class WindmillExtension extends \Twig_Extension
      * @param \Twig_Environment $twig
      * @param RouterInterface   $router
      * @param TemplateRegistry  $templateRegistry
+     * @param MoveCalculator    $moveCalculator
      * @param string            $moveRoute
      */
     public function __construct(
         \Twig_Environment $twig,
         RouterInterface $router,
         TemplateRegistry $templateRegistry,
+        MoveCalculator $moveCalculator,
         $moveRoute
     ) {
         $this->twig             = $twig;
         $this->router           = $router;
         $this->templateRegistry = $templateRegistry;
+        $this->moveCalculator   = $moveCalculator;
         $this->moveRoute        = $moveRoute;
     }
 
@@ -225,7 +233,6 @@ class WindmillExtension extends \Twig_Extension
         }
 
         $pieceDecorator = new PieceDecorator();
-        $moveCalculator = new MoveCalculator();
 
         /** @var Square[] $squares */
         foreach ($squaresByRow as $row => $squares) {
@@ -244,7 +251,7 @@ class WindmillExtension extends \Twig_Extension
                     $data['piece_color'] = $piece->getColor();
                     $data['content']     = $pieceDecorator->toAscii($piece);
                     if ($game->getCurrentColor() === $piece->getColor()) {
-                        foreach ($moveCalculator->possibleMovesFrom($square->getPosition(), $game->getBoard(), true) as $move) {
+                        foreach ($this->moveCalculator->possibleMovesFrom($square->getPosition(), $game->getBoard(), true) as $move) {
                             $data['possible_targets'][] = $move->getTo();
                         }
                     }
