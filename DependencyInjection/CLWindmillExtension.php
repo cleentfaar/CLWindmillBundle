@@ -24,5 +24,17 @@ class CLWindmillExtension extends Extension
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
+
+        $this->setParameters($container, $config);
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param string[]         $config
+     */
+    protected function setParameters(ContainerBuilder $container, array $config)
+    {
+        $container->setParameter('cl_windmill.default_storage', $config['default_storage']);
+        $container->setParameter('cl_windmill.templates', $config['templates']);
     }
 }

@@ -1,3 +1,11 @@
-cl_windmill_game:
-    pattern:  /game
-    defaults: { _controller: CLWindmillBundle:Game:index }
+cl_windmill_game_new:
+    pattern:  /windmill/game/new/
+    defaults: { _controller: CLWindmillBundle:Game:new }
+
+cl_windmill_game_view:
+    pattern:  /windmill/game/{id}/
+    defaults: { _controller: CLWindmillBundle:Game:view }
+
+cl_windmill_game_move:
+    pattern:  /windmill/game/{id}/move
+    defaults: { _controller: CLWindmillBundle:Game:move }

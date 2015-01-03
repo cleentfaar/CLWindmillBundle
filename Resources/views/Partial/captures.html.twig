@@ -1,0 +1,12 @@
+<table>
+  {% for capture in white_captures %}
+    <tr>
+      <td>{{ capture.capturedPiece.type }}</td>
+    </tr>
+  {% endfor %}
+  {% for capture in black_captures %}
+    <tr>
+      <td>{{ capture.capturedPiece.type }}</td>
+    </tr>
+  {% endfor %}
+</table>

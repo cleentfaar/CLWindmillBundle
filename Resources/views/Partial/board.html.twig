@@ -1,0 +1,16 @@
+<table class="board">
+  {% for rowLabel,squares in rows %}
+    <tr>
+      <td class="row-label">{{ rowLabel }}</td>
+      {% for position,data in squares %}
+        <td class="square {{ data.color_text }}" data-position="{{ position }}" data-color="{{ data.color }}" data-piece-type="{{ data.piece_type }}" data-piece-color="{{ data.color }}" data-possible-targets="{{ data.possible_targets|join(',') }}">{{ data.content|default('&nbsp;')|raw }}</td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+  <tr>
+    <td>&nbsp;</td>
+    {% for column_label in column_labels %}
+      <td class="column-label">{{ column_label }}</td>
+    {% endfor %}
+  </tr>
+</table>

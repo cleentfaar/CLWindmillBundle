@@ -1,0 +1,29 @@
+<div class="game">
+  <h1 class="title">GAME: {{ game.id }}</h1>
+
+  <div class="board-container">{{ windmill_render_board(game) }}</div>
+  <div class="board-sidebar">
+    <div class="block">{{ windmill_render_vs(game) }}</div>
+    <div class="block">{{ windmill_render_clocks(game) }}</div>
+    <div class="block">{{ windmill_render_history(game) }}</div>
+    <div class="block">
+      Use AJAX requests: <input type="checkbox" id="WindmillAjaxToggle"/>
+    </div>
+  </div>
+  <div style="clear:both;"></div>
+  <div class="board-captures">{{ windmill_render_captures(game) }}</div>
+
+  <form method="post" action="{{ move_url }}">
+    <input type="hidden" name="from" id="WindmillFrom"/>
+    <input type="hidden" name="to" id="WindmillTo"/>
+  </form>
+
+  <script type="text/javascript" src="{{ asset('bundles/clwindmill/js/jquery.min.js') }}"></script>
+  <script type="text/javascript" src="{{ asset('bundles/clwindmill/js/jquery.windmill.js') }}"></script>
+  <script type="text/javascript">
+    $(function() {
+      $('.game').windmill({{ windmill_options|json_encode|raw }});
+    });
+  </script>
+</div>
+

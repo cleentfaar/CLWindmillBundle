@@ -2,17 +2,19 @@
 
 namespace CL\Bundle\WindmillBundle\Command;
 
-use CL\Decoration\Factory\DelegatingDecoratorFactory;
 use CL\Windmill\Decoration\BoardDecorator;
+use CL\Windmill\Decoration\PieceDecorator;
 use CL\Windmill\Exception\InvalidMoveException;
 use CL\Windmill\Exception\InvalidNotationException;
-use CL\Windmill\Representation\Game\Board\BoardInterface;
-use CL\Windmill\Representation\Game\Board\Move\MoveInterface;
-use CL\Windmill\Representation\Game\Color;
-use CL\Windmill\Representation\Game\GameFactory;
-use CL\Windmill\Representation\Game\GameInterface;
-use CL\Windmill\Representation\Game\Player\PlayerInterface;
-use CL\Windmill\Representation\Notation\Parser\MoveParser;
+use CL\Windmill\Model\Board\BoardInterface;
+use CL\Windmill\Model\Color;
+use CL\Windmill\Model\Move\MoveInterface;
+use CL\Windmill\Model\Player\ComputerPlayer;
+use CL\Windmill\Model\Player\HumanPlayer;
+use CL\Windmill\Util\GameFactory;
+use CL\Windmill\Model\Game\GameInterface;
+use CL\Windmill\Model\Player\PlayerInterface;
+use CL\Windmill\Util\MoveParser;
 use Sensio\Bundle\GeneratorBundle\Command\Helper\DialogHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -47,7 +49,7 @@ class GameCommand extends AbstractCommand
         if ($id !== null) {
             $game = $this->loadGame($storage, $id);
         } else {
-            $game = $this->createGame($storage, $output);
+            $game = $this->createGame($output);
         }
 
         return $this->playGame($game, $storage, $output);
@@ -70,7 +72,7 @@ class GameCommand extends AbstractCommand
                 $this->outputBoard($game->getBoard(), $output);
                 $humanMove = $this->askForMove($game->getCurrentPlayer(), $game->getBoard(), $output);
                 try {
-                   $game->doMove($humanMove);
+                    $game->doMove($humanMove);
                 } catch (InvalidMoveException $e) {
                     $output->writeln(sprintf('<error>Invalid move: %s</error>', $e->getMessage()));
 
@@ -95,7 +97,7 @@ class GameCommand extends AbstractCommand
      * @param string     $storage
      * @param string|int $id
      *
-     * @return \CL\Windmill\Representation\Game\Game
+     * @return \CL\Windmill\Model\Game\Game
      */
     protected function loadGame($storage, $id)
     {
@@ -103,19 +105,15 @@ class GameCommand extends AbstractCommand
     }
 
     /**
-     * @param string          $storage
      * @param OutputInterface $output
      *
-     * @return \CL\Windmill\Representation\Game\Game
+     * @return \CL\Windmill\Model\Game\Game
      */
-    protected function createGame($storage, OutputInterface $output)
+    protected function createGame(OutputInterface $output)
     {
-        $options     = [
-            'white_player' => $this->askForPlayerSetup(Color::WHITE, $output),
-            'black_player' => $this->askForPlayerSetup(Color::BLACK, $output),
-            'storage'      => $storage,
-        ];
-        $game        = $this->getGameFactory()->create($options);
+        $whitePlayer = $this->askForPlayerSetup(Color::WHITE, $output);
+        $blackPlayer = $this->askForPlayerSetup(Color::BLACK, $output);
+        $game        = $this->getGameFactory()->create($whitePlayer, $blackPlayer);
 
         return $game;
     }
@@ -141,7 +139,7 @@ class GameCommand extends AbstractCommand
         $output->writeln(sprintf('<comment>%s\'s turn to move.</comment>', $player->getName()));
         $moveNotation = $this->getDialogHelper()->ask($output, '<question>Please enter the position to move to:</question> ');
         try {
-            $move = $this->getMoveNotationParser()->parse($moveNotation, $board, $player->getColor());
+            $move = $this->getMoveParser()->parse($moveNotation, $board, $player->getColor());
         } catch (InvalidNotationException $e) {
             $output->write(sprintf('<error>Invalid notation: %s</error>', $e->getMessage()));
 
@@ -157,9 +155,8 @@ class GameCommand extends AbstractCommand
      */
     protected function outputBoard(BoardInterface $board, OutputInterface $output)
     {
-        /** @var BoardDecorator $boardDecorator */
-        $boardDecorator = $this->getDecorator($board);
-        $output->writeln($boardDecorator->toAscii($this->getDelegatingDecoratorFactory()));
+        $boardDecorator = new BoardDecorator(new PieceDecorator());
+        $output->writeln($boardDecorator->toAscii($board));
     }
 
     /**
@@ -170,7 +167,7 @@ class GameCommand extends AbstractCommand
      */
     protected function askForPlayerSetup($color, OutputInterface $output)
     {
-        $player = [
+        $player     = [
             'color' => $color,
         ];
         $colorText  = $player['color'] == Color::WHITE ? 'white' : 'black';
@@ -183,13 +180,10 @@ class GameCommand extends AbstractCommand
         $humanControlledQuestion = '<question>Will this player be human-controlled?</question> ';
         $humanControlled         = $this->getDialogHelper()->askConfirmation($output, $humanControlledQuestion, 'y', ['y', 'N']);
         if ($humanControlled === 'N') {
-            $humanControlled = false;
+            $player = new ComputerPlayer($color, $playerName);
         } else {
-            $humanControlled = true;
+            $player = new HumanPlayer($color, $playerName);
         }
-
-        $player['name']             = $playerName;
-        $player['human_controlled'] = $humanControlled;
 
         return $player;
     }
@@ -203,29 +197,11 @@ class GameCommand extends AbstractCommand
     }
 
     /**
-     * @param object $object
-     *
-     * @return object
-     */
-    protected function getDecorator($object)
-    {
-        return $this->getDelegatingDecoratorFactory()->create($object);
-    }
-
-    /**
-     * @return DelegatingDecoratorFactory
-     */
-    protected function getDelegatingDecoratorFactory()
-    {
-        return $this->getContainer()->get('cl_decoration.delegating_decorator_factory');
-    }
-
-    /**
      * @return MoveParser
      */
-    protected function getMoveNotationParser()
+    protected function getMoveParser()
     {
-        return $this->getContainer()->get('cl_windmill.representation.notation_parser.move');
+        return $this->getContainer()->get('cl_windmill.util.move_parser');
     }
 
     /**
@@ -233,7 +209,7 @@ class GameCommand extends AbstractCommand
      */
     protected function getGameFactory()
     {
-        return $this->getContainer()->get('cl_windmill.representation.game_factory');
+        return $this->getContainer()->get('cl_windmill.util.game_factory');
     }
 
     /**

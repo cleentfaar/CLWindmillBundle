@@ -1,0 +1,18 @@
+<table class="block history">
+    <tr>
+      <td class="column">
+        <ul>
+          {% for move in white_moves %}
+            <li>{{ move_decorator.toNotation(move) }}</li>
+          {% endfor %}
+        </ul>
+      </td>
+      <td class="column">
+        <ul>
+          {% for move in black_moves %}
+            <li>{{ move_decorator.toNotation(move) }}</li>
+          {% endfor %}
+        </ul>
+      </td>
+    </tr>
+</table>

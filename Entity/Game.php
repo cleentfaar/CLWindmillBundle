@@ -2,40 +2,60 @@
 
 namespace CL\Bundle\WindmillBundle\Entity;
 
-use CL\Windmill\Representation\Game\GameInterface;
-use CL\Windmill\Storage\PotentialGameInterface;
+use CL\Windmill\Storage\Adapter\Orm\PersistableGameInterface;
+use CL\Windmill\Storage\Adapter\Orm\PersistableGameStateInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Game
- *
- * @ORM\Table(name="game", indexes={@ORM\Index(columns={"state_id"})})
+ * @ORM\Table
  * @ORM\Entity
  */
-class Game implements PotentialGameInterface
+class Game implements PersistableGameInterface
 {
     /**
      * @var integer
      *
-     * @ORM\Column(name="id", type="integer", nullable=false)
+     * @ORM\Column(type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     protected $id;
 
     /**
-     * @var array
+     * @var string
      *
-     * @ORM\Column(name="white_player", type="json_array", nullable=false)
+     * @ORM\Column(type="string", unique=true)
      */
-    protected $whitePlayer;
+    protected $uid;
 
     /**
-     * @var array
+     * @var string $whitePlayerName
      *
-     * @ORM\Column(name="black_player", type="json_array", nullable=false)
+     * @ORM\Column(type="string")
      */
-    protected $blackPlayer;
+    protected $whitePlayerName;
+
+    /**
+     * @var bool $whitePlayerHuman
+     *
+     * @ORM\Column(type="boolean")
+     */
+    protected $whitePlayerHuman = false;
+
+    /**
+     * @var string $blackPlayerName
+     *
+     * @ORM\Column(type="string")
+     */
+    protected $blackPlayerName;
+
+    /**
+     * @var bool $blackPlayerHuman
+     *
+     * @ORM\Column(type="boolean")
+     */
+    protected $blackPlayerHuman = false;
 
     /**
      * @var \DateTime
@@ -45,17 +65,15 @@ class Game implements PotentialGameInterface
     protected $datetimeCreated;
 
     /**
-     * @var GameState
+     * @var GameState[]|ArrayCollection
      *
-     * @ORM\ManyToOne(targetEntity="GameState", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="state_id", referencedColumnName="id")
-     * })
+     * @ORM\OneToMany(targetEntity="GameState", mappedBy="game", cascade={"persist"})
      */
-    protected $state;
+    protected $states;
 
     public function __construct()
     {
+        $this->states          = new ArrayCollection();
         $this->datetimeCreated = new \DateTime();
     }
 
@@ -70,51 +88,113 @@ class Game implements PotentialGameInterface
     }
 
     /**
-     * Set whitePlayer
+     * @param string $uid
+     */
+    public function setUid($uid)
+    {
+        $this->uid = $uid;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUid()
+    {
+        return $this->uid;
+    }
+
+    /**
+     * Set whitePlayerName
      *
-     * @param array $whitePlayer
+     * @param string $whitePlayerName
      *
      * @return Game
      */
-    public function setWhitePlayer(array $whitePlayer)
+    public function setWhitePlayerName($whitePlayerName)
     {
-        $this->whitePlayer = $whitePlayer;
+        $this->whitePlayerName = $whitePlayerName;
 
         return $this;
     }
 
     /**
-     * Get whitePlayer
+     * Get whitePlayerName
      *
-     * @return array
+     * @return string
      */
-    public function getWhitePlayer()
+    public function getWhitePlayerName()
     {
-        return $this->whitePlayer;
+        return $this->whitePlayerName;
+    }
+
+
+    /**
+     * @return boolean
+     */
+    public function isWhitePlayerHuman()
+    {
+        return $this->whitePlayerHuman;
     }
 
     /**
-     * Set blackPlayer
+     * Set whitePlayerHuman
      *
-     * @param array $blackPlayer
+     * @param string $whitePlayerHuman
      *
      * @return Game
      */
-    public function setBlackPlayer(array $blackPlayer)
+    public function setWhitePlayerHuman($whitePlayerHuman)
     {
-        $this->blackPlayer = $blackPlayer;
+        $this->whitePlayerHuman = $whitePlayerHuman;
 
         return $this;
     }
 
     /**
-     * Get blackPlayer
+     * Set blackPlayerName
      *
-     * @return array
+     * @param string $blackPlayerName
+     *
+     * @return Game
      */
-    public function getBlackPlayer()
+    public function setBlackPlayerName($blackPlayerName)
     {
-        return $this->blackPlayer;
+        $this->blackPlayerName = $blackPlayerName;
+
+        return $this;
+    }
+
+    /**
+     * Get blackPlayerName
+     *
+     * @return string
+     */
+    public function getBlackPlayerName()
+    {
+        return $this->blackPlayerName;
+    }
+
+
+    /**
+     * Set blackPlayerHuman
+     *
+     * @param string $blackPlayerHuman
+     *
+     * @return Game
+     */
+    public function setBlackPlayerHuman($blackPlayerHuman)
+    {
+        $this->blackPlayerHuman = $blackPlayerHuman;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isBlackPlayerHuman()
+    {
+        return $this->blackPlayerHuman;
     }
 
     /**
@@ -144,57 +224,32 @@ class Game implements PotentialGameInterface
     /**
      * Set state
      *
-     * @param GameState $state
+     * @param PersistableGameStateInterface $state
      *
      * @return Game
      */
-    public function setState(GameState $state)
+    public function addState(PersistableGameStateInterface $state)
     {
-        $this->state = $state;
+        $this->states->add($state);
 
         return $this;
     }
 
     /**
-     * Get state
+     * Get states
      *
-     * @return GameState
+     * @return GameState[]|ArrayCollection
      */
-    public function getState()
+    public function getStates()
     {
-        return $this->state;
+        return $this->states;
     }
 
     /**
-     * {@inheritdoc}
+     * @return GameState|null
      */
-    public function extract()
+    public function getLastState()
     {
-        return [
-            'white_player' => $this->getWhitePlayer(),
-            'black_player' => $this->getBlackPlayer(),
-            'board'        => $this->getState()->getBoard(),
-            'storage'      => 'orm',
-        ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function inject(GameInterface $game)
-    {
-        if ($this->getWhitePlayer() === null) {
-            $this->setWhitePlayer($game->getWhitePlayer()->toArray());
-        }
-        if ($this->getBlackPlayer() === null) {
-            $this->setBlackPlayer($game->getBlackPlayer()->toArray());
-        }
-        if ($this->id === null && $game->getId() !== null) {
-            $this->id = $game->getId();
-        }
-        $state = new GameState();
-        $state->setBoard($game->getBoard()->toArray());
-        $state->setCurrentColor($game->getCurrentColor());
-        $this->setState($state);
+        return $this->getStates()->last() ?: null;
     }
 }

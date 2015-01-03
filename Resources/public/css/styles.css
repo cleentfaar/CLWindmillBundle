@@ -1,0 +1,130 @@
+.game {
+  margin: auto;
+  width: 960px;
+  font-family: Helvetica, Arial;
+}
+
+.game .title {
+
+}
+
+.board-container,
+.board-sidebar {
+  background-color: #FAFAFA;
+  border: 1px solid #DDDDDD;
+}
+
+.board-container {
+  float: left;
+  width: 500px;
+  height: 500px;
+}
+
+.board-sidebar {
+  float: right;
+  width: 300px;
+  height: 500px;
+  clear: right;
+}
+
+.board-sidebar .block {
+  padding: 10px;
+  border-bottom: 1px solid #CCC;
+  text-align: center;
+}
+
+.board-sidebar .block > table {
+  width: 100%;
+}
+
+.board-sidebar .block:last-child {
+  border-bottom: none;
+}
+
+.board-sidebar .clocks {
+  height: 30px;
+}
+
+.board-sidebar .clocks .clock {
+  font-size: 30px;
+  width: 50%;
+}
+
+.board-sidebar .history .column {
+  width: 50%;
+  text-align: center;
+  vertical-align: top;
+}
+
+.board-sidebar .history .column:last-child {
+  border-left: 1px solid black;
+}
+
+.board-sidebar .history .column ul,
+.board-sidebar .history .column ul li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.icon-white,
+.icon-black {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  border: 1px solid black;
+}
+
+.icon-black{
+  background-color: black;
+  border: none;
+}
+
+.captures {
+
+}
+
+.board {
+  width: 100%;
+  height: 100%;
+}
+
+.row-label {
+  text-align: center;
+  width: 50px;
+}
+
+.column-label {
+  text-align: center;
+  height: 50px;
+}
+
+.square {
+  text-align: center;
+  font-family: monospace;
+  border: 4px solid transparent;
+  font-size: 30px;
+  width: 50px;
+  height: 50px;
+}
+
+.square.black {
+  background-color: silver;
+}
+
+.square.white {
+  background-color: white;
+}
+
+.square.target {
+  cursor: pointer;
+}
+
+.square.selected {
+  border-color: red;
+}
+
+.square.target {
+  border-color: orange;
+}
