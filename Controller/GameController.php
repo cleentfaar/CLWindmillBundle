@@ -74,7 +74,7 @@ class GameController extends Controller
         if ($request->isXmlHttpRequest()) {
             return $this->createJsonResponseFromGame($game, $moved);
         } elseif (!$moved) {
-            throw $e;
+            throw new NotAcceptableHttpException($e->getMessage());
         }
 
         return $this->redirect($this->generateUrl('cl_windmill_game_view', ['id' => $game->getId()]));
