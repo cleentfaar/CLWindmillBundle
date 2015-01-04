@@ -30,6 +30,20 @@ class Game implements PersistableGameInterface
     protected $uid;
 
     /**
+     * @var int $checkmate
+     *
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    protected $checkmate;
+
+    /**
+     * @var bool $finished
+     *
+     * @ORM\Column(type="boolean")
+     */
+    protected $finished = false;
+
+    /**
      * @var string $whitePlayerName
      *
      * @ORM\Column(type="string")
@@ -101,6 +115,38 @@ class Game implements PersistableGameInterface
     public function getUid()
     {
         return $this->uid;
+    }
+
+    /**
+     * @param int $checkmate
+     */
+    public function setCheckmate($checkmate)
+    {
+        $this->checkmate = $checkmate;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCheckmate()
+    {
+        return $this->checkmate;
+    }
+
+    /**
+     * @param bool $finished
+     */
+    public function setFinished($finished)
+    {
+        $this->finished = $finished;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasFinished()
+    {
+        return $this->finished === true;
     }
 
     /**
@@ -230,6 +276,8 @@ class Game implements PersistableGameInterface
      */
     public function addState(PersistableGameStateInterface $state)
     {
+        $state->setGame($this);
+
         $this->states->add($state);
 
         return $this;

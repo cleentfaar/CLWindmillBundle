@@ -1,5 +1,11 @@
 <div class="game">
   <h1 class="title">GAME: {{ game.id }}</h1>
+  {% if game.hasFinished %}
+    <p>
+      <strong>The game has finished!</strong><br/>
+      {% if game.checkmate %}{{ game.checkmate }} checkmated {{ game.currentColor }}{% endif %}
+    </p>
+  {% endif %}
 
   <div class="board-container">{{ windmill_render_board(game) }}</div>
   <div class="board-sidebar">

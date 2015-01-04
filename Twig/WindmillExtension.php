@@ -8,6 +8,7 @@ use CL\Windmill\Model\Color;
 use CL\Windmill\Model\Game\GameInterface;
 use CL\Windmill\Model\Square\Square;
 use CL\Windmill\Util\MoveCalculator;
+use CL\Windmill\Util\MoveHelper;
 use CL\Windmill\Util\TemplateRegistry;
 use Symfony\Component\Routing\RouterInterface;
 
@@ -252,6 +253,7 @@ class WindmillExtension extends \Twig_Extension
                     $data['content']     = $pieceDecorator->toAscii($piece);
                     if ($game->getCurrentColor() === $piece->getColor()) {
                         foreach ($this->moveCalculator->possibleMovesFrom($square->getPosition(), $game->getBoard(), true) as $move) {
+                            MoveHelper::enrich($move, $game);
                             $data['possible_targets'][] = $move->getTo();
                         }
                     }

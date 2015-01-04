@@ -7,7 +7,7 @@ use CL\Windmill\Model\Color;
 use CL\Windmill\Model\Game\Game;
 use CL\Windmill\Model\Game\GameInterface;
 use CL\Windmill\Model\Move\Move;
-use CL\Windmill\Util\BoardHelper;
+use CL\Windmill\Util\LazyMoveCalculator;
 use CL\Windmill\Util\StorageHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,7 +40,7 @@ class GameController extends Controller
      */
     public function viewAction($id)
     {
-        $game = $this->loadGame($id);
+        $game  = $this->loadGame($id);
 
         return $this->render('CLWindmillBundle:Game:index.html.twig', [
             'game' => $game,
@@ -63,21 +63,7 @@ class GameController extends Controller
         }
 
         $game  = $this->loadGame($id);
-        $move  = new Move($fromPosition, $toPosition);
-        $error = null;
-
-        var_dump($game->getBoard()->getSquare(BoardHelper::POSITION_A2));
-        var_dump($game->getBoard()->getSquare($move->getFrom()));
-
-        try {
-            $game->doMove($move);
-        } catch (\Exception $e) {
-            $error = $e->getMessage();
-        }
-
-        if ($error === null) {
-            $this->getStorageHelper()->saveGame($game);
-        }
+        $error = $this->processMove($game, $fromPosition, $toPosition);
 
         if ($request->isXmlHttpRequest()) {
             return $this->createJsonResponseFromGame($game, $error);
@@ -90,13 +76,43 @@ class GameController extends Controller
 
     /**
      * @param GameInterface $game
+     * @param int           $from
+     * @param int           $to
+     *
+     * @return string|null
+     */
+    private function processMove(GameInterface $game, $from, $to)
+    {
+        try {
+            $error = null;
+
+            $game->doMove($from, $to);
+            $game->finishTurn($this->getMoveCalculator());
+
+            $this->getStorageHelper()->saveGame($game);
+
+            if (!$game->hasFinished() && !$game->getCurrentPlayer()->isHuman()) {
+                $game->doEngineMove($this->get('cl_windmill.util.move_calculator'));
+                $game->finishTurn($this->getMoveCalculator());
+
+                $this->getStorageHelper()->saveGame($game);
+            }
+        } catch (\Exception $e) {
+            $error = $e->getMessage();
+        }
+
+        return $error;
+    }
+
+    /**
+     * @param GameInterface $game
      * @param string|null   $error
      *
      * @return JsonResponse
      */
     private function createJsonResponseFromGame(GameInterface $game, $error = null)
     {
-        $moveCalculator = $this->get('cl_windmill.util.move_calculator');
+        $moveCalculator = $this->getMoveCalculator();
         $pieceDecorator = new PieceDecorator();
         $squares        = [];
         foreach ($game->getBoard()->getSquares() as $square) {
@@ -158,11 +174,20 @@ class GameController extends Controller
      */
     private function createGame()
     {
-        $whitePlayer = $this->get('cl_windmill.util.player_factory')->create(Color::WHITE, 'Player 1', true);
-        $blackPlayer = $this->get('cl_windmill.util.player_factory')->create(Color::BLACK, 'Computer', false);
+        $whitePlayer = $this->get('cl_windmill.util.player_factory')->createWhite('Player 1', true);
+        $blackPlayer = $this->get('cl_windmill.util.player_factory')->createBlack('Player 2', true);
+        //$blackPlayer = $this->get('cl_windmill.util.player_factory')->create(Color::BLACK, 'Computer', false);
         $game        = $this->get('cl_windmill.util.game_factory')->create($whitePlayer, $blackPlayer);
 
         return $game;
+    }
+
+    /**
+     * @return LazyMoveCalculator
+     */
+    private function getMoveCalculator()
+    {
+        return $this->get('cl_windmill.util.move_calculator');
     }
 
     /**

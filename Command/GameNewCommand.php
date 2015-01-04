@@ -3,8 +3,7 @@
 namespace CL\Bundle\WindmillBundle\Command;
 
 use CL\Windmill\Model\Color;
-use CL\Windmill\Model\Player\ComputerPlayer;
-use CL\Windmill\Model\Player\HumanPlayer;
+use CL\Windmill\Model\Player\Player;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -73,12 +72,9 @@ class GameNewCommand extends AbstractCommand
         );
 
         $humanControlledQuestion = '<question>Will this player be human-controlled?</question> ';
-        $humanControlled         = $this->getQuestionHelper()->askConfirmation($output, $humanControlledQuestion, 'y', ['y', 'N']);
-        if ($humanControlled === 'N') {
-            $player = new ComputerPlayer($color, $playerName);
-        } else {
-            $player = new HumanPlayer($color, $playerName);
-        }
+        $humanControlled         = $this->askConfirmation($humanControlledQuestion, 'y', $input, $output);
+
+        $player = new Player($color, $playerName, (bool) $humanControlled);
 
         return $player;
     }
