@@ -68,7 +68,7 @@
         if (to.hasClass('target')) {
           var from = self.$element.find('.square.selected').eq(0);
           if (from.length < 1) {
-            alert('No initial square selected');
+            console.log('No initial square selected');
           }
 
           if (self.ajaxToggle.is(':checked')) {
@@ -84,14 +84,12 @@
                 this.windmill.handleResponse(data);
               }
             });
-            alert('ajax sent!');
           } else {
             // just submit (hidden) form
             self.formFrom.attr('value', from.data('position'));
             self.formTo.attr('value', to.data('position'));
 
             self.formFrom.closest('form').submit();
-            alert('form sent to '+self.formFrom.closest('form').attr('action'));
           }
         }
       });
