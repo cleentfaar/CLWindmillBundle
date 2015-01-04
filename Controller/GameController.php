@@ -5,7 +5,9 @@ namespace CL\Bundle\WindmillBundle\Controller;
 use CL\Windmill\Decorator\PieceDecorator;
 use CL\Windmill\Model\Color;
 use CL\Windmill\Model\Game\Game;
+use CL\Windmill\Model\Game\GameInterface;
 use CL\Windmill\Model\Move\Move;
+use CL\Windmill\Util\BoardHelper;
 use CL\Windmill\Util\StorageHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -13,6 +15,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 
 class GameController extends Controller
 {
@@ -23,7 +26,9 @@ class GameController extends Controller
     {
         $game = $this->createGame();
 
-        $this->getStorageHelper()->saveGame($game);
+        if (!$this->getStorageHelper()->saveGame($game)) {
+            throw new ServiceUnavailableHttpException('The game could not be stored by the configured adapter');
+        }
 
         return $this->redirect($this->generateUrl('cl_windmill_game_view', ['id' => $game->getId()]));
     }
@@ -35,7 +40,7 @@ class GameController extends Controller
      */
     public function viewAction($id)
     {
-        $game = $this->getStorageHelper()->loadGame($id);
+        $game = $this->loadGame($id);
 
         return $this->render('CLWindmillBundle:Game:index.html.twig', [
             'game' => $game,
@@ -57,36 +62,39 @@ class GameController extends Controller
             throw new NotAcceptableHttpException('Must supply both a `from` and a `to`-position');
         }
 
-        $game = $this->getStorageHelper()->loadGame($id);
-        $move = new Move($fromPosition, $toPosition);
+        $game  = $this->loadGame($id);
+        $move  = new Move($fromPosition, $toPosition);
+        $error = null;
+
+        var_dump($game->getBoard()->getSquare(BoardHelper::POSITION_A2));
+        var_dump($game->getBoard()->getSquare($move->getFrom()));
 
         try {
             $game->doMove($move);
-            $moved = true;
         } catch (\Exception $e) {
-            $moved = false;
+            $error = $e->getMessage();
         }
 
-        if ($moved) {
+        if ($error === null) {
             $this->getStorageHelper()->saveGame($game);
         }
 
         if ($request->isXmlHttpRequest()) {
-            return $this->createJsonResponseFromGame($game, $moved);
-        } elseif (!$moved) {
-            throw new NotAcceptableHttpException($e->getMessage());
+            return $this->createJsonResponseFromGame($game, $error);
+        } elseif ($error !== null) {
+            throw new NotAcceptableHttpException($error);
         }
 
         return $this->redirect($this->generateUrl('cl_windmill_game_view', ['id' => $game->getId()]));
     }
 
     /**
-     * @param Game $game
-     * @param bool $ok
+     * @param GameInterface $game
+     * @param string|null   $error
      *
      * @return JsonResponse
      */
-    private function createJsonResponseFromGame(Game $game, $ok = false)
+    private function createJsonResponseFromGame(GameInterface $game, $error = null)
     {
         $moveCalculator = $this->get('cl_windmill.util.move_calculator');
         $pieceDecorator = new PieceDecorator();
@@ -116,12 +124,33 @@ class GameController extends Controller
             $squares[] = $squareData;
         }
 
-        return new JsonResponse([
-            'ok'     => $ok,
+        $responseData = [
+            'ok'     => $error === null,
             'result' => [
                 'squares' => $squares
             ],
-        ]);
+        ];
+
+        if ($error !== null) {
+            $responseData['error'] = $error;
+        }
+
+        return new JsonResponse($responseData);
+    }
+
+    /**
+     * @param $id
+     *
+     * @return GameInterface
+     */
+    private function loadGame($id)
+    {
+        $game = $this->getStorageHelper()->loadGame($id);
+        if ($game === null) {
+            throw $this->createNotFoundException(sprintf('There is no game with this ID: %s', $id));
+        }
+
+        return $game;
     }
 
     /**
