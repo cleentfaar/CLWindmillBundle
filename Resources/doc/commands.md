@@ -53,3 +53,8 @@ $ app/console windmill:game:load 12345
 Cas's turn to move.
 Please enter the position to move to:
 ```
+
+
+## More documentation
+
+Coming soon!
