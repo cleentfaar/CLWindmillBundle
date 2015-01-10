@@ -49,6 +49,8 @@ class GameNewCommand extends AbstractCommand
         $blackPlayer = $this->askForPlayerSetup(Color::BLACK, $input, $output);
         $game        = $this->getGameFactory()->create($whitePlayer, $blackPlayer);
 
+        $output->writeln(sprintf('Started game with ID <comment>%s</comment>', $game->getId()));
+
         return $game;
     }
 
