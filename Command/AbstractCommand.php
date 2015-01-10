@@ -7,6 +7,7 @@ use CL\Windmill\Decorator\PieceDecorator;
 use CL\Windmill\Exception\InvalidMoveException;
 use CL\Windmill\Exception\InvalidNotationException;
 use CL\Windmill\Model\Board\BoardInterface;
+use CL\Windmill\Model\Color;
 use CL\Windmill\Model\Game\GameInterface;
 use CL\Windmill\Model\Move\Move;
 use CL\Windmill\Model\Move\MoveInterface;
@@ -41,19 +42,31 @@ abstract class AbstractCommand extends ContainerAwareCommand
             if ($game->getCurrentPlayer()->isHuman()) {
                 $output->writeln('');
                 $this->outputBoard($game->getBoard(), $output);
-                $humanMove = $this->askForMove($game->getCurrentPlayer(), $game->getBoard(), $input, $output);
+                list($from, $to) = $this->askForMove($game->getCurrentPlayer(), $game->getBoard(), $input, $output);
                 try {
-                    $game->doMove($humanMove);
+                    $moveMade = $game->doMove($from, $to);
                 } catch (InvalidMoveException $e) {
                     $output->writeln(sprintf('<error>Invalid move: %s</error>', $e->getMessage()));
 
                     return $this->playGame($game, $storage, $input, $output);
                 }
             } else {
-                $game->doEngineMove($this->getMoveCalculator());
+                $moveMade = $game->doEngineMove($this->getMoveCalculator());
             }
 
+            $game->finishTurn($this->getMoveCalculator());
+
             $this->getStorageHelper()->saveGame($game, $storage);
+
+            $piece = $moveMade->getPiece();
+
+            $output->writeln(sprintf(
+                'Move made by <comment>%s</comment>: <comment>%s</comment> from <comment>%s</comment> to <comment>%s</comment>',
+                $game->getOpposingPlayer()->getName(),
+                $piece->getTypeLabel(),
+                $moveMade->getFromLabel(),
+                $moveMade->getToLabel()
+            ));
         }
 
         return 0;
@@ -64,7 +77,7 @@ abstract class AbstractCommand extends ContainerAwareCommand
      * @param BoardInterface  $board
      * @param OutputInterface $output
      *
-     * @return MoveInterface
+     * @return array
      */
     protected function askForMove(PlayerInterface $player, BoardInterface $board, InputInterface $input, OutputInterface $output)
     {
@@ -72,14 +85,13 @@ abstract class AbstractCommand extends ContainerAwareCommand
         $moveNotation = $this->ask('<question>Please enter the position to move to:</question> ', null, $input, $output);
         try {
             $parsed = $this->getMoveParser()->parse($moveNotation, $board, $player->getColor());
-            $move   = new Move($parsed['from'], $parsed['to']);
+
+            return [$parsed['from'], $parsed['to']];
         } catch (InvalidNotationException $e) {
             $output->write(sprintf('<error>Invalid notation: %s</error>', $e->getMessage()));
 
             return $this->askForMove($player, $board, $input, $output);
         }
-
-        return $move;
     }
 
     /**
