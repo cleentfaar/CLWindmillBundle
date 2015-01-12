@@ -1,7 +1,12 @@
 {
   "name": "cleentfaar/windmill-bundle",
   "description": "A Symfony bundle providing integration with the Windmill Chess library",
-  "keywords": ["windmill", "chess", "symfony", "bundle"],
+  "keywords": [
+    "windmill",
+    "chess",
+    "symfony",
+    "bundle"
+  ],
   "type": "symfony-bundle",
   "license": "MIT",
   "authors": [

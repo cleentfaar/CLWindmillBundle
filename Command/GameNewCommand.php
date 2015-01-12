@@ -3,7 +3,9 @@
 namespace CL\Bundle\WindmillBundle\Command;
 
 use CL\Windmill\Model\Color;
+use CL\Windmill\Model\Game\Game;
 use CL\Windmill\Model\Player\Player;
+use CL\Windmill\Util\GameFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -39,15 +41,16 @@ class GameNewCommand extends AbstractCommand
     }
 
     /**
+     * @param InputInterface  $input
      * @param OutputInterface $output
      *
-     * @return \CL\Windmill\Model\Game\Game
+     * @return Game
      */
     protected function createGame(InputInterface $input, OutputInterface $output)
     {
-        $whitePlayer = $this->askForPlayerSetup(Color::WHITE, $input, $output);
-        $blackPlayer = $this->askForPlayerSetup(Color::BLACK, $input, $output);
-        $game        = $this->getGameFactory()->create($whitePlayer, $blackPlayer);
+        $whitePlayer = $this->askForPlayer(Color::WHITE, $input, $output);
+        $blackPlayer = $this->askForPlayer(Color::BLACK, $input, $output);
+        $game        = GameFactory::create($whitePlayer, $blackPlayer);
 
         $output->writeln(sprintf('Started game with ID <comment>%s</comment>', $game->getId()));
 
@@ -60,7 +63,7 @@ class GameNewCommand extends AbstractCommand
      *
      * @return array
      */
-    protected function askForPlayerSetup($color, InputInterface $input, OutputInterface $output)
+    protected function askForPlayer($color, InputInterface $input, OutputInterface $output)
     {
         $player     = [
             'color' => $color,

@@ -3,19 +3,14 @@
 namespace CL\Bundle\WindmillBundle\Command;
 
 use CL\Windmill\Decorator\BoardDecorator;
-use CL\Windmill\Decorator\PieceDecorator;
 use CL\Windmill\Exception\InvalidMoveException;
 use CL\Windmill\Exception\InvalidNotationException;
 use CL\Windmill\Model\Board\BoardInterface;
-use CL\Windmill\Model\Color;
 use CL\Windmill\Model\Game\GameInterface;
-use CL\Windmill\Model\Move\Move;
-use CL\Windmill\Model\Move\MoveInterface;
 use CL\Windmill\Model\Player\PlayerInterface;
-use CL\Windmill\Util\GameFactory;
-use CL\Windmill\Util\LazyMoveCalculator;
 use CL\Windmill\Util\MoveCalculator;
-use CL\Windmill\Util\MoveParser;
+use CL\Windmill\Util\MoveRanker;
+use CL\Windmill\Util\NotationParser;
 use CL\Windmill\Util\StorageHelper;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -39,12 +34,13 @@ abstract class AbstractCommand extends ContainerAwareCommand
     protected function playGame(GameInterface $game, $storage, InputInterface $input, OutputInterface $output)
     {
         while ($game->hasFinished() === false) {
+            $output->writeln('');
+            $this->outputBoard($game->getBoard(), $output);
             if ($game->getCurrentPlayer()->isHuman()) {
-                $output->writeln('');
-                $this->outputBoard($game->getBoard(), $output);
-                list($from, $to) = $this->askForMove($game->getCurrentPlayer(), $game->getBoard(), $input, $output);
+                list($from, $to) = $this->askForMove($game->getCurrentPlayer(), $game, $input, $output);
                 try {
-                    $moveMade = $game->doMove($from, $to);
+                    $moveMade = $game->doHumanMove($from, $to);
+                    $moveMade->setRanking(MoveRanker::rank($moveMade, $game, $this->getMoveCalculator()));
                 } catch (InvalidMoveException $e) {
                     $output->writeln(sprintf('<error>Invalid move: %s</error>', $e->getMessage()));
 
@@ -67,6 +63,10 @@ abstract class AbstractCommand extends ContainerAwareCommand
                 $moveMade->getFromLabel(),
                 $moveMade->getToLabel()
             ));
+
+            if ($moveMade->getRanking() !== null) {
+                $output->writeln(sprintf('Windmill ranked this move at: <comment>%d</comment>', $moveMade->getRanking()));
+            }
         }
 
         return 0;
@@ -74,23 +74,24 @@ abstract class AbstractCommand extends ContainerAwareCommand
 
     /**
      * @param PlayerInterface $player
-     * @param BoardInterface  $board
+     * @param GameInterface   $game
+     * @param InputInterface  $input
      * @param OutputInterface $output
      *
      * @return array
      */
-    protected function askForMove(PlayerInterface $player, BoardInterface $board, InputInterface $input, OutputInterface $output)
+    protected function askForMove(PlayerInterface $player, GameInterface $game, InputInterface $input, OutputInterface $output)
     {
         $output->writeln(sprintf('<comment>%s\'s turn to move.</comment>', $player->getName()));
         $moveNotation = $this->ask('<question>Please enter the position to move to:</question> ', null, $input, $output);
         try {
-            $parsed = $this->getMoveParser()->parse($moveNotation, $board, $player->getColor());
+            $parsed = $this->getNotationParser()->parse($moveNotation, $game, $player->getColor());
 
             return [$parsed['from'], $parsed['to']];
         } catch (InvalidNotationException $e) {
             $output->write(sprintf('<error>Invalid notation: %s</error>', $e->getMessage()));
 
-            return $this->askForMove($player, $board, $input, $output);
+            return $this->askForMove($player, $game, $input, $output);
         }
     }
 
@@ -100,12 +101,11 @@ abstract class AbstractCommand extends ContainerAwareCommand
      */
     protected function outputBoard(BoardInterface $board, OutputInterface $output)
     {
-        $boardDecorator = new BoardDecorator(new PieceDecorator());
-        $output->writeln($boardDecorator->toAscii($board));
+        $output->writeln(BoardDecorator::toAscii($board));
     }
 
     /**
-     * @return MoveCalculator|LazyMoveCalculator
+     * @return MoveCalculator
      */
     protected function getMoveCalculator()
     {
@@ -121,19 +121,11 @@ abstract class AbstractCommand extends ContainerAwareCommand
     }
 
     /**
-     * @return MoveParser
+     * @return NotationParser
      */
-    protected function getMoveParser()
+    protected function getNotationParser()
     {
-        return $this->getContainer()->get('cl_windmill.util.move_parser');
-    }
-
-    /**
-     * @return GameFactory
-     */
-    protected function getGameFactory()
-    {
-        return $this->getContainer()->get('cl_windmill.util.game_factory');
+        return $this->getContainer()->get('cl_windmill.util.notation_parser');
     }
 
     /**

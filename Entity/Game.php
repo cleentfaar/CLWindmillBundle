@@ -30,18 +30,18 @@ class Game implements PersistableGameInterface
     protected $uid;
 
     /**
-     * @var int $checkmate
-     *
-     * @ORM\Column(type="integer", nullable=true)
-     */
-    protected $checkmate;
-
-    /**
      * @var bool $finished
      *
      * @ORM\Column(type="boolean")
      */
     protected $finished = false;
+
+    /**
+     * @var int $finishedReason
+     *
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    protected $finishedReason;
 
     /**
      * @var string $whitePlayerName
@@ -92,9 +92,7 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Get id
-     *
-     * @return integer
+     * @return int|null
      */
     public function getId()
     {
@@ -102,15 +100,19 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * @param string $uid
+     * {@inheritdoc}
+     *
+     * @return $this
      */
     public function setUid($uid)
     {
         $this->uid = $uid;
+
+        return $this;
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function getUid()
     {
@@ -118,31 +120,39 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * @param int $checkmate
+     * {@inheritdoc}
+     *
+     * @return $this
      */
-    public function setCheckmate($checkmate)
+    public function setFinishedReason($reason)
     {
-        $this->checkmate = $checkmate;
+        $this->finishedReason = $reason;
+
+        return $this;
     }
 
     /**
-     * @return int
+     * {@inheritdoc}
      */
-    public function getCheckmate()
+    public function getFinishedReason()
     {
-        return $this->checkmate;
+        return $this->finishedReason;
     }
 
     /**
-     * @param bool $finished
+     * {@inheritdoc}
+     *
+     * @return $this
      */
     public function setFinished($finished)
     {
         $this->finished = $finished;
+
+        return $this;
     }
 
     /**
-     * @return bool
+     * {@inheritdoc}
      */
     public function hasFinished()
     {
@@ -150,11 +160,9 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Set whitePlayerName
+     * {@inheritdoc}
      *
-     * @param string $whitePlayerName
-     *
-     * @return Game
+     * @return $this
      */
     public function setWhitePlayerName($whitePlayerName)
     {
@@ -164,9 +172,7 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Get whitePlayerName
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getWhitePlayerName()
     {
@@ -175,7 +181,7 @@ class Game implements PersistableGameInterface
 
 
     /**
-     * @return boolean
+     * {@inheritdoc}
      */
     public function isWhitePlayerHuman()
     {
@@ -183,11 +189,9 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Set whitePlayerHuman
+     * {@inheritdoc}
      *
-     * @param string $whitePlayerHuman
-     *
-     * @return Game
+     * @return $this
      */
     public function setWhitePlayerHuman($whitePlayerHuman)
     {
@@ -197,11 +201,9 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Set blackPlayerName
+     * {@inheritdoc}
      *
-     * @param string $blackPlayerName
-     *
-     * @return Game
+     * @return $this
      */
     public function setBlackPlayerName($blackPlayerName)
     {
@@ -211,9 +213,7 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Get blackPlayerName
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getBlackPlayerName()
     {
@@ -222,11 +222,9 @@ class Game implements PersistableGameInterface
 
 
     /**
-     * Set blackPlayerHuman
+     * {@inheritdoc}
      *
-     * @param string $blackPlayerHuman
-     *
-     * @return Game
+     * @return $this
      */
     public function setBlackPlayerHuman($blackPlayerHuman)
     {
@@ -236,7 +234,7 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * @return boolean
+     * {@inheritdoc}
      */
     public function isBlackPlayerHuman()
     {
@@ -244,11 +242,9 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Set datetimeCreated
+     * {@inheritdoc}
      *
-     * @param \DateTime $datetimeCreated
-     *
-     * @return Game
+     * @return $this
      */
     public function setDatetimeCreated($datetimeCreated)
     {
@@ -258,9 +254,7 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Get datetimeCreated
-     *
-     * @return \DateTime
+     * {@inheritdoc}
      */
     public function getDatetimeCreated()
     {
@@ -268,11 +262,9 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Set state
+     * {@inheritdoc}
      *
-     * @param PersistableGameStateInterface $state
-     *
-     * @return Game
+     * @return $this
      */
     public function addState(PersistableGameStateInterface $state)
     {
@@ -284,9 +276,7 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * Get states
-     *
-     * @return GameState[]|ArrayCollection
+     * {@inheritdoc}
      */
     public function getStates()
     {
@@ -294,7 +284,7 @@ class Game implements PersistableGameInterface
     }
 
     /**
-     * @return GameState|null
+     * {@inheritdoc}
      */
     public function getLastState()
     {
