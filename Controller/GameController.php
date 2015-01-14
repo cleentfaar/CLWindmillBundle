@@ -6,8 +6,9 @@ use CL\Windmill\Decorator\PieceDecorator;
 use CL\Windmill\Model\Color;
 use CL\Windmill\Model\Game\Game;
 use CL\Windmill\Model\Game\GameInterface;
-use CL\Windmill\Model\Move\Move;
-use CL\Windmill\Util\LazyMoveCalculator;
+use CL\Windmill\Util\GameFactory;
+use CL\Windmill\Util\MoveCalculator;
+use CL\Windmill\Util\PlayerFactory;
 use CL\Windmill\Util\StorageHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,7 +41,7 @@ class GameController extends Controller
      */
     public function viewAction($id)
     {
-        $game  = $this->loadGame($id);
+        $game = $this->loadGame($id);
 
         return $this->render('CLWindmillBundle:Game:index.html.twig', [
             'game' => $game,
@@ -113,7 +114,6 @@ class GameController extends Controller
     private function createJsonResponseFromGame(GameInterface $game, $error = null)
     {
         $moveCalculator = $this->getMoveCalculator();
-        $pieceDecorator = new PieceDecorator();
         $squares        = [];
         foreach ($game->getBoard()->getSquares() as $square) {
             $squareData = [
@@ -127,7 +127,7 @@ class GameController extends Controller
             if (null !== $piece = $square->getPiece()) {
                 $squareData['piece_type']  = $piece->getType();
                 $squareData['piece_color'] = $piece->getColor();
-                $squareData['content']     = $pieceDecorator->toAscii($piece);
+                $squareData['content']     = PieceDecorator::toAscii($piece);
                 if ($game->getCurrentColor() === $piece->getColor()) {
                     $squareData['possible_targets'] = $moveCalculator->possibleMovesFrom(
                         $square->getPosition(),
@@ -174,16 +174,15 @@ class GameController extends Controller
      */
     private function createGame()
     {
-        $whitePlayer = $this->get('cl_windmill.util.player_factory')->createWhite('Player 1', true);
-        $blackPlayer = $this->get('cl_windmill.util.player_factory')->createBlack('Player 2', true);
-        //$blackPlayer = $this->get('cl_windmill.util.player_factory')->create(Color::BLACK, 'Computer', false);
-        $game        = $this->get('cl_windmill.util.game_factory')->create($whitePlayer, $blackPlayer);
+        $whitePlayer = PlayerFactory::createWhite('Player 1', true);
+        $blackPlayer = PlayerFactory::createBlack('Player 2', true);
+        $game        = GameFactory::create($whitePlayer, $blackPlayer);
 
         return $game;
     }
 
     /**
-     * @return LazyMoveCalculator
+     * @return MoveCalculator
      */
     private function getMoveCalculator()
     {
