@@ -33,7 +33,8 @@ The aim of this bundle is to make it easier to work with the many (decoupled, bu
 using the same DIC and templating patterns that are already provided by the framework. Since I use the Symfony Framework
 for almost all of my own projects, it has become much easier to just adopt my work on their fundamentals.
 
-Like my other projects, I'm also using to learn working with some techniques I haven't used before.
+Like my other projects, I'm also using this to learn working with some techniques I haven't used before.
+
 For this project, a few of them are:
 - Make it easy to configure different templates for different sections of a chess game
 - Check out other goals in the library's documentation [here](https://github.com/cleentfaar/windmill).
